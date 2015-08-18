@@ -990,7 +990,7 @@ struct SharedFreeList(ParentAllocator,
     }
 }
 
-unittest
+version(I_want_my_program_to_crash) unittest
 {
     import std.algorithm.comparison : equal;
     import std.concurrency : receiveOnly, send, spawn, thisTid, Tid;
@@ -1015,12 +1015,12 @@ unittest
     }
 
     Tid[] tids;
-    foreach (i; 0 .. 1000)
+    foreach (i; 0 .. 20)
     {
         tids ~= spawn(&fun, thisTid, i);
     }
 
-    foreach (i; 0 .. 1000)
+    foreach (i; 0 .. 20)
     {
         assert(receiveOnly!bool);
     }

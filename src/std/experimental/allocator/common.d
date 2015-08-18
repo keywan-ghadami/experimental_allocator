@@ -280,13 +280,14 @@ unittest
 
 /**
 Advances the beginning of `b` to start at alignment `a`. The resulting buffer
-may therefore be shorter.
+may therefore be shorter. Returns the adjusted buffer, or null if obtaining a
+non-empty buffer is impossible.
 */
 package void[] roundUpToAlignment(void[] b, uint a)
 {
     auto e = b.ptr + b.length;
     auto p = cast(void*) roundUpToAlignment(cast(size_t) b.ptr, a);
-    if (e < p) return null;
+    if (e <= p) return null;
     return p[0 .. e - p];
 }
 
@@ -294,11 +295,9 @@ unittest
 {
     void[] empty;
     assert(roundUpToAlignment(empty, 4) == null);
-    char[9] buf;
-    auto buf2 = buf[1 .. $];
-    // At least one of buf and buf2 is misaligned
-    assert(roundUpToAlignment(buf, 128) == null
-        || roundUpToAlignment(buf2, 128) == null);
+    char[128] buf;
+    // At least one pointer inside buf is 128-aligned
+    assert(roundUpToAlignment(buf, 128) !is null);
 }
 
 /**
@@ -335,13 +334,13 @@ Returns $(D s) rounded up to the nearest power of 2.
 */
 package size_t roundUpToPowerOf2(size_t s)
 {
-    import std.typetuple : TypeTuple;
+    import std.meta : AliasSeq;
     assert(s <= (size_t.max >> 1) + 1);
     --s;
     static if (size_t.sizeof == 4)
-        alias Shifts = TypeTuple!(1, 2, 4, 8, 16);
+        alias Shifts = AliasSeq!(1, 2, 4, 8, 16);
     else
-        alias Shifts = TypeTuple!(1, 2, 4, 8, 16, 32);
+        alias Shifts = AliasSeq!(1, 2, 4, 8, 16, 32);
     foreach (i; Shifts)
     {
         s |= s >> i;
