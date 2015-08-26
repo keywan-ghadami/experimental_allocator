@@ -167,7 +167,7 @@ struct AllocatorList(Factory, BookkeepingAllocator = GCAllocator)
         {
             auto result = n.allocate(s);
             if (result.length != s) continue;
-//            assert(owns(result) == Ternary.yes);
+            assert(owns(result) == Ternary.yes);
             // Bring to front if not already
             if (root != n)
             {
@@ -188,7 +188,7 @@ struct AllocatorList(Factory, BookkeepingAllocator = GCAllocator)
         if (auto a = addAllocator(s))
         {
             auto result = a.allocate(s);
-//            assert(owns(result) == Ternary.yes || !result.ptr);
+            assert(owns(result) == Ternary.yes || !result.ptr);
             return result;
         }
         return null;
@@ -473,7 +473,8 @@ struct AllocatorList(Factory, BookkeepingAllocator = GCAllocator)
         assert(special || !allocators.ptr);
         if (special)
         {
-            special.deallocate(allocators);
+            special.a.deallocateAll;
+//            special.a.destroy;
         }
         allocators = null;
         root = null;
