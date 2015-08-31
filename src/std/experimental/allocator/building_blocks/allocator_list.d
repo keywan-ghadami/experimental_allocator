@@ -335,7 +335,6 @@ struct AllocatorList(Factory, BookkeepingAllocator = GCAllocator)
             allocators[$ - 1].next = root;
         assert(allocators[$ - 1].a.bytesUsed == 0);
         root = &allocators[$ - 1];
-        assert(root.next !is root);
         return root;
     }
 
