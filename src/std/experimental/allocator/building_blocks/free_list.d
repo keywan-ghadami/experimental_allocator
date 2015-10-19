@@ -269,7 +269,7 @@ struct FreeList(ParentAllocator,
             alias toAllocate = bytes;
         }
         assert(toAllocate == max || max == unbounded);
-        auto result = parent.allocate(bytes);
+        auto result = parent.allocate(toAllocate);
         static if (hasTolerance)
         {
             if (result) result = result.ptr[0 .. bytes];
@@ -926,12 +926,12 @@ struct SharedFreeList(ParentAllocator,
         assert(bytes < size_t.max / 2);
         if (!freeListEligible(bytes)) return parent.allocate(bytes);
         if (maxSize != unbounded) bytes = max;
-        if (!_root) return allocateFresh(bytes);
         // Pop off the freelist
         shared Node* oldRoot = void, next = void;
         do
         {
             oldRoot = _root; // atomic load
+            if (!oldRoot) return allocateFresh(bytes);
             next = oldRoot.next; // atomic load
         }
         while (!cas(&_root, oldRoot, next));
@@ -962,8 +962,8 @@ struct SharedFreeList(ParentAllocator,
             incNodes();
             return true;
         }
-        static if (is(typeof(parent.deallocate(block))))
-            return parent.deallocate(block);
+        static if (hasMember!(ParentAllocator, "deallocate"))
+            return parent.deallocate(b);
         else
             return false;
     }
@@ -990,7 +990,7 @@ struct SharedFreeList(ParentAllocator,
     }
 }
 
-version(I_want_my_program_to_crash) unittest
+unittest
 {
     import std.algorithm.comparison : equal;
     import std.concurrency : receiveOnly, send, spawn, thisTid, Tid;

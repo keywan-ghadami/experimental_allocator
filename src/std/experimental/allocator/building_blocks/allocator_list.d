@@ -311,7 +311,6 @@ struct AllocatorList(Factory, BookkeepingAllocator = GCAllocator)
         {
             assert(t.length % Node.sizeof == 0);
             assert(t.ptr.alignedAt(Node.alignof));
-            (cast(ubyte[]) t)[Node.sizeof * allocators.length .. $] = 0;
             allocators = cast(Node[]) t;
             allocators[$ - 1].setUnused;
         }
@@ -481,8 +480,7 @@ struct AllocatorList(Factory, BookkeepingAllocator = GCAllocator)
         assert(special || !allocators.ptr);
         if (special)
         {
-            special.a.deallocateAll;
-//            special.a.destroy;
+            special.deallocate(allocators);
         }
         allocators = null;
         root = null;

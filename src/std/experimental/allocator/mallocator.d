@@ -104,65 +104,65 @@ version (Windows)
     version(CRuntime_DigitalMars)
     {
         // Helper to cast the infos written before the aligned pointer
-        // this header keeps track of the size (required to realloc) and of 
+        // this header keeps track of the size (required to realloc) and of
         // the base ptr (required to free).
         private struct AlignInfo
-        {   
-            void* basePtr; 
+        {
+            void* basePtr;
             size_t size;
             static AlignInfo* opCall(void* ptr)
             {
                 return cast(AlignInfo*) (ptr - AlignInfo.sizeof);
-            } 
+            }
         }
-        
+
         private void* _aligned_malloc(size_t size, size_t alignment)
         {
             import std.c.stdlib: malloc;
             size_t offset = alignment + size_t.sizeof * 2 - 1;
-            
+
             // unaligned chunk
             void* basePtr = malloc(size + offset);
             if (!basePtr) return null;
-            
+
             // get aligned location within the chunk
-            void* alignedPtr = cast(void**)((cast(size_t)(basePtr) + offset) 
+            void* alignedPtr = cast(void**)((cast(size_t)(basePtr) + offset)
                 & ~(alignment - 1));
-            
+
             // write the header before the aligned pointer
             AlignInfo* head = AlignInfo(alignedPtr);
             head.basePtr = basePtr;
             head.size = size;
-              
-            return alignedPtr;      
+
+            return alignedPtr;
         }
-        
+
         private void* _aligned_realloc(void* ptr, size_t size, size_t alignment)
         {
             import std.c.stdlib: free;
             import std.c.string: memcpy;
-            
+
             if(!ptr) return _aligned_malloc(size, alignment);
-            
+
             // gets the header from the exising pointer
             AlignInfo* head = AlignInfo(ptr);
-            
+
             // gets a new aligned pointer
             void* alignedPtr = _aligned_malloc(size, alignment);
-            if (!alignedPtr) 
+            if (!alignedPtr)
             {
                 //to https://msdn.microsoft.com/en-us/library/ms235462.aspx
                 //see Return value: in this case the original block is unchanged
                 return null;
             }
-            
+
             // copy exising data
             memcpy(alignedPtr, ptr, head.size);
             free(head.basePtr);
-            
-            return alignedPtr;        
+
+            return alignedPtr;
         }
-        
+
         private void _aligned_free(void *ptr)
         {
             import std.c.stdlib: free;
@@ -170,7 +170,7 @@ version (Windows)
             AlignInfo* head = AlignInfo(ptr);
             free(head.basePtr);
         }
-   
+
     }
     // DMD Win 64 bit, uses microsoft standard C library which implements them
     else
@@ -302,19 +302,19 @@ unittest
     //...
 }
 
-version(unittest) version(CRuntime_DigitalMars) 
+version(unittest) version(CRuntime_DigitalMars)
     size_t addr(ref void* ptr){return cast(size_t) ptr;}
 version(CRuntime_DigitalMars) unittest
 {
     void* m;
-        
+
     m = _aligned_malloc(16, 0x10);
     if (m)
     {
         assert((m.addr & 0xF) == 0);
         _aligned_free(m);
     }
-    
+
     m = _aligned_malloc(16, 0x100);
     if (m)
     {
@@ -325,10 +325,10 @@ version(CRuntime_DigitalMars) unittest
     m = _aligned_malloc(16, 0x1000);
     if (m)
     {
-        assert((m.addr & 0xFFF) == 0);  
+        assert((m.addr & 0xFFF) == 0);
         _aligned_free(m);
     }
-    
+
     m = _aligned_malloc(16, 0x10);
     if (m)
     {
@@ -337,13 +337,13 @@ version(CRuntime_DigitalMars) unittest
         if (m) assert((m.addr & 0xFFFF) == 0);
         _aligned_free(m);
     }
-    
+
     m = _aligned_malloc(8, 0x10);
     if (m)
     {
         *cast(ulong*) m = 0X01234567_89ABCDEF;
         m = _aligned_realloc(m, 0x800, 0x1000);
-        if (m) assert(*cast(ulong*) m == 0X01234567_89ABCDEF); 
+        if (m) assert(*cast(ulong*) m == 0X01234567_89ABCDEF);
         _aligned_free(m);
-    }     
+    }
 }
