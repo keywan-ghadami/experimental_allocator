@@ -1,0 +1,7 @@
+{
+	"name": "experimental_allocator",
+	"description": "Mirror of Phobos' std.experimental.allocator package",
+	"copyright": "see phobos",
+	"authors": ["see_phobos"],
+	"license": "boost",
+}
